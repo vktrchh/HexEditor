@@ -5,9 +5,9 @@ public class HexVisibleTable {
     private int bytesInRow = 16;
     private int visibleRows = 16;
 
-    private long alignOffset(long offset){
-        return offset <= 0 ? 0: offset - (offset % bytesInRow);
-    }
+//    private long alignOffset(long offset){
+//        return offset <= 0 ? 0: offset - (offset % bytesInRow);
+//    }
 
     public long getTableOffset() {
         return tableOffset;

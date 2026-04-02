@@ -1,6 +1,7 @@
 package vvojtyuk.hexeditor.controller;
 
-import vvojtyuk.hexeditor.io.FileByteReader;
+import vvojtyuk.hexeditor.document.FileHexDocument;
+import vvojtyuk.hexeditor.document.HexDocument;
 import vvojtyuk.hexeditor.ui.ByteInfoPanel;
 import vvojtyuk.hexeditor.ui.HexTable;
 import vvojtyuk.hexeditor.ui.HexVisibleTable;
@@ -22,7 +23,7 @@ public class HexEditorController {
     private final ByteInfoPanel byteInfoPanel;
     private final NavigationToHexTable navigationToHexTable;
 
-    private FileByteReader fileByteReader;
+    private HexDocument hexDocument;
 
     public HexEditorController(
             Component parent, //для диалогов
@@ -71,13 +72,13 @@ public class HexEditorController {
         File file = chooser.getSelectedFile();
 
         try {
-            if (fileByteReader != null) {
-                fileByteReader.close();
+            if (hexDocument != null) {
+                hexDocument.close();
             }
 
-            fileByteReader = new FileByteReader(file);
-            hexTable.setFileByteReader(fileByteReader);
-            navigationToHexTable.setFileByteReader(fileByteReader);
+            hexDocument = new FileHexDocument(file);
+            hexTable.setFileByteReader(hexDocument);
+            navigationToHexTable.setFileByteReader(hexDocument);
 
             setHexVisibleTableOffset(0);
             byteInfoPanel.clearSelectionInfo();
@@ -133,7 +134,7 @@ public class HexEditorController {
     }
 
     public void updateSelectedByteInfo() {
-        if (fileByteReader == null) {
+        if (hexDocument == null) {
             byteInfoPanel.clearSelectionInfo();
             return;
         }
@@ -149,12 +150,12 @@ public class HexEditorController {
         long offset = hexVisibleTable.getByteOffset(row, column);
 
         try {
-            if (offset >= fileByteReader.length()) {
+            if (offset >= hexDocument.length()) {
                 byteInfoPanel.clearSelectionInfo();
                 return;
             }
 
-            byte value = fileByteReader.readByte(offset);
+            byte value = hexDocument.readByte(offset);
             byte[] block2 = readByteBlock(offset, 2);
             byte[] block4 = readByteBlock(offset, 4);
             byte[] block8 = readByteBlock(offset, 8);
@@ -174,18 +175,18 @@ public class HexEditorController {
     }
 
     private byte[] readByteBlock(long startOffset, int size) throws IOException {
-        if (fileByteReader == null || startOffset < 0) {
+        if (hexDocument == null || startOffset < 0) {
             return null;
         }
 
-        if (startOffset + size > fileByteReader.length()) {
+        if (startOffset + size > hexDocument.length()) {
             return null;
         }
 
         byte[] data = new byte[size];
 
         for (int i = 0; i < size; i++) {
-            data[i] = fileByteReader.readByte(startOffset + i);
+            data[i] = hexDocument.readByte(startOffset + i);
         }
 
         return data;
