@@ -4,9 +4,11 @@ import javax.swing.*;
 import java.awt.*;
 
 public class MainFrame extends JFrame {
+    private final MainMenuBar mainMenuBar = new MainMenuBar();
 
     public MainFrame(){
         initFrame();
+        setJMenuBar(mainMenuBar);
     }
 
     public void initFrame(){
@@ -16,5 +18,6 @@ public class MainFrame extends JFrame {
         setLayout(new BorderLayout());
         setLocationRelativeTo(null);
     }
+
 
 }
