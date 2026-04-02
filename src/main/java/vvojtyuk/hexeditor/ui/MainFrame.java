@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class MainFrame extends JFrame {
     private final MainMenuBar mainMenuBar = new MainMenuBar();
-    private final JToolBar toolBar = new JToolBar();
+    private final MainToolBar toolBar = new MainToolBar();
 
     private final HexVisibleTable hexVisibleTable = new HexVisibleTable();
 
@@ -21,14 +21,9 @@ public class MainFrame extends JFrame {
     private final JTable offsetTable = new JTable(new OffsetTable(hexVisibleTable));
     private final JScrollPane scrollPane = new JScrollPane(jHexTable);
 
-
-    private final JTextField bytesInRow = new JTextField("16", 4);
-    private final JTextField visibleRows = new JTextField("16", 4);
-
     public MainFrame(){
         initFrame();
         setJMenuBar(mainMenuBar);
-        initToolBar();
         initTables();
         initLayout();
         mainMenuBar.getOpenItem().addActionListener(e -> openFile());
@@ -40,13 +35,6 @@ public class MainFrame extends JFrame {
         setSize(1200, 800);
         setLayout(new BorderLayout());
         setLocationRelativeTo(null);
-    }
-
-    public void initToolBar(){
-        toolBar.add(new JLabel("Байт в строке"));
-        toolBar.add(bytesInRow);
-        toolBar.add(new JLabel("Строк"));
-        toolBar.add(visibleRows);
     }
 
     public void initTables(){
@@ -68,6 +56,7 @@ public class MainFrame extends JFrame {
         add(scrollPane, BorderLayout.CENTER);
     }
 
+    public void initAction(){}
 
     public void openFile(){
         JFileChooser chooser = new JFileChooser();
