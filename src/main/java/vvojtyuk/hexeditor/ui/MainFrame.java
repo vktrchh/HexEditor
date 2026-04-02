@@ -46,6 +46,7 @@ public class MainFrame extends JFrame {
         offsetTable.setFocusable(false);
         offsetTable.setRowSelectionAllowed(false);
         offsetTable.setCellSelectionEnabled(false);
+        jHexTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
         scrollPane.setRowHeaderView(offsetTable);
         scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER, offsetTable.getTableHeader());
@@ -64,12 +65,12 @@ public class MainFrame extends JFrame {
         mainMenuBar.getOpenItem().addActionListener(e -> openFile());
 
         toolBar.getStartButton().addActionListener(e -> setHexVisibleTableOffset(navigationToHexTable.moveToStart()));
-
         toolBar.getPageUpButton().addActionListener(e -> setHexVisibleTableOffset(navigationToHexTable.movePageUp()));
-
         toolBar.getPageDownButton().addActionListener(e -> setHexVisibleTableOffset(navigationToHexTable.movePageDown()));
-
         toolBar.getEndButton().addActionListener(e -> setHexVisibleTableOffset(navigationToHexTable.moveToEnd()));
+
+        toolBar.getBytesInRowField().addActionListener(e -> applyHexVisibleTableSettings());
+        toolBar.getVisibleRowsField().addActionListener(e -> applyHexVisibleTableSettings());
     }
 
     public void openFile(){
@@ -99,5 +100,41 @@ public class MainFrame extends JFrame {
         hexVisibleTable.setTableOffset(offset);
         hexTable.fireTableDataChanged();
         offsetTableModel.fireTableDataChanged();
+    }
+
+    private void applyHexVisibleTableSettings() {
+        try {
+            int bytesInRow = Integer.parseInt(toolBar.getBytesInRowField().getText().trim());
+            int visibleRows = Integer.parseInt(toolBar.getVisibleRowsField().getText().trim());
+
+            hexVisibleTable.setBytesInRow(bytesInRow);
+            hexVisibleTable.setVisibleRows(visibleRows);
+
+            long normalizedOffset = navigationToHexTable.normalizeOffset(hexVisibleTable.getTableOffset());
+            hexVisibleTable.setTableOffset(normalizedOffset);
+
+            hexTable.fireTableStructureChanged();
+            offsetTableModel.fireTableDataChanged();
+
+            offsetTable.getColumnModel().getColumn(0).setPreferredWidth(80);
+
+            for (int i = 0; i < jHexTable.getColumnModel().getColumnCount(); i++) {
+                jHexTable.getColumnModel().getColumn(i).setPreferredWidth(42);
+            }
+        } catch (NumberFormatException e){
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Введите целые числа",
+                    "Ошибка",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    e.getMessage(),
+                    "Ошибка",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
     }
 }

@@ -45,4 +45,12 @@ class MainToolBar extends JToolBar {
     public JButton getPageDownButton() {
         return pageDownButton;
     }
+
+    public JTextField getBytesInRowField() {
+        return bytesInRowField;
+    }
+
+    public JTextField getVisibleRowsField() {
+        return visibleRowsField;
+    }
 }
