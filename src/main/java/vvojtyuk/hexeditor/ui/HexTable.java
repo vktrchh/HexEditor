@@ -15,6 +15,7 @@ public class HexTable extends AbstractTableModel {
 
     public void setFileByteReader(FileByteReader fileByteReader) {
         this.fileByteReader = fileByteReader;
+        fireTableDataChanged();
     }
 
     @Override
@@ -39,6 +40,9 @@ public class HexTable extends AbstractTableModel {
         }
         long offset = hexVisibleTable.getByteOffset(rowIndex, columnIndex);
         try{
+            if(offset >= fileByteReader.length()) {
+                return "";
+            }
             byte value = fileByteReader.readByte(offset);
             return String.format("%02X", value & 0xFF);
         } catch (IOException e){

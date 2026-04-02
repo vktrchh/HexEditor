@@ -14,9 +14,13 @@ public class MainFrame extends JFrame {
     private final HexVisibleTable hexVisibleTable = new HexVisibleTable();
 
     private FileByteReader fileByteReader;
+
     private final HexTable hexTable = new HexTable(hexVisibleTable);
     private final JTable jHexTable = new JTable(hexTable);
-    private final OffsetTable offsetTable = new OffsetTable(hexVisibleTable);
+
+    private final JTable offsetTable = new JTable(new OffsetTable(hexVisibleTable));
+    private final JScrollPane scrollPane = new JScrollPane(jHexTable);
+
 
     private final JTextField bytesInRow = new JTextField("16", 4);
     private final JTextField visibleRows = new JTextField("16", 4);
@@ -24,10 +28,9 @@ public class MainFrame extends JFrame {
     public MainFrame(){
         initFrame();
         setJMenuBar(mainMenuBar);
-        add(new JTable(offsetTable));
-        add(toolBar, BorderLayout.NORTH);
-        add(new JScrollPane(jHexTable));
         initToolBar();
+        initTables();
+        initLayout();
         mainMenuBar.getOpenItem().addActionListener(e -> openFile());
     }
 
@@ -45,6 +48,26 @@ public class MainFrame extends JFrame {
         toolBar.add(new JLabel("Строк"));
         toolBar.add(visibleRows);
     }
+
+    public void initTables(){
+        offsetTable.setEnabled(false);
+        offsetTable.setFocusable(false);
+        offsetTable.setRowSelectionAllowed(false);
+        offsetTable.setCellSelectionEnabled(false);
+
+        scrollPane.setRowHeaderView(offsetTable);
+        scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER, offsetTable.getTableHeader());
+
+        offsetTable.getColumnModel().getColumn(0).setPreferredWidth(80);
+        offsetTable.setPreferredScrollableViewportSize(new Dimension(80, 0));
+        scrollPane.getRowHeader().setPreferredSize(new Dimension(80, 0));
+    }
+
+    private void initLayout(){
+        add(toolBar, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+    }
+
 
     public void openFile(){
         JFileChooser chooser = new JFileChooser();
