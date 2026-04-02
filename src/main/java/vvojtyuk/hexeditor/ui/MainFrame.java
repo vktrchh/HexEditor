@@ -1,12 +1,11 @@
 package vvojtyuk.hexeditor.ui;
 
+import vvojtyuk.hexeditor.controller.HexEditorController;
 import vvojtyuk.hexeditor.io.FileByteReader;
 import vvojtyuk.hexeditor.util.NavigationToHexTable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
 
 public class MainFrame extends JFrame {
     private final MainMenuBar mainMenuBar = new MainMenuBar();
@@ -14,8 +13,6 @@ public class MainFrame extends JFrame {
     private final ByteInfoPanel byteInfoPanel = new ByteInfoPanel();
 
     private final HexVisibleTable hexVisibleTable = new HexVisibleTable();
-
-    private FileByteReader fileByteReader;
 
     private final HexTable hexTable = new HexTable(hexVisibleTable);
     private final JTable jHexTable = new JTable(hexTable);
@@ -25,6 +22,16 @@ public class MainFrame extends JFrame {
     private final JScrollPane scrollPane = new JScrollPane(jHexTable);
 
     private final NavigationToHexTable navigationToHexTable = new NavigationToHexTable(hexVisibleTable);
+    private final HexEditorController controller = new HexEditorController(
+            this,
+            hexVisibleTable,
+            hexTable,
+            offsetTableModel,
+            jHexTable,
+            offsetTable,
+            byteInfoPanel,
+            navigationToHexTable
+    );
 
     public MainFrame(){
         initFrame();
@@ -68,145 +75,38 @@ public class MainFrame extends JFrame {
     }
 
     public void initAction(){
-        mainMenuBar.getOpenItem().addActionListener(e -> openFile());
+        mainMenuBar.getOpenItem().addActionListener(e -> controller.openFile());
 
-        toolBar.getStartButton().addActionListener(e -> setHexVisibleTableOffset(navigationToHexTable.moveToStart()));
-        toolBar.getPageUpButton().addActionListener(e -> setHexVisibleTableOffset(navigationToHexTable.movePageUp()));
-        toolBar.getPageDownButton().addActionListener(e -> setHexVisibleTableOffset(navigationToHexTable.movePageDown()));
-        toolBar.getEndButton().addActionListener(e -> setHexVisibleTableOffset(navigationToHexTable.moveToEnd()));
+        toolBar.getStartButton().addActionListener(e -> controller.moveToStart());
+        toolBar.getPageUpButton().addActionListener(e -> controller.movePageUp());
+        toolBar.getPageDownButton().addActionListener(e -> controller.movePageDown());
+        toolBar.getEndButton().addActionListener(e -> controller.moveToEnd());
 
-        toolBar.getBytesInRowField().addActionListener(e -> applyHexVisibleTableSettings());
-        toolBar.getVisibleRowsField().addActionListener(e -> applyHexVisibleTableSettings());
+        toolBar.getBytesInRowField().addActionListener(e ->
+                controller.applyHexVisibleTableSettings(
+                        toolBar.getBytesInRowField().getText(),
+                        toolBar.getVisibleRowsField().getText()
+                )
+        );
+
+        toolBar.getVisibleRowsField().addActionListener(e ->
+                controller.applyHexVisibleTableSettings(
+                        toolBar.getBytesInRowField().getText(),
+                        toolBar.getVisibleRowsField().getText()
+                )
+        );
 
         jHexTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                updateSelectedByteInfo();
+                controller.updateSelectedByteInfo();
             }
         });
 
         jHexTable.getColumnModel().getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                updateSelectedByteInfo();
+                controller.updateSelectedByteInfo();
             }
         });
     }
 
-    public void openFile(){
-        JFileChooser chooser = new JFileChooser();
-        int result = chooser.showOpenDialog(this);
-
-        if(result != JFileChooser.APPROVE_OPTION){
-            return;
-        }
-        File file = chooser.getSelectedFile();
-
-        try {
-            if (fileByteReader != null) {
-                fileByteReader.close();
-            }
-
-            fileByteReader = new FileByteReader(file);
-            hexTable.setFileByteReader(fileByteReader);
-            navigationToHexTable.setFileByteReader(fileByteReader);
-            setHexVisibleTableOffset(0);
-            byteInfoPanel.clearSelectionInfo();
-        } catch (IOException e){
-            return;
-        }
-    }
-
-    private void setHexVisibleTableOffset(long offset){
-        hexVisibleTable.setTableOffset(offset);
-        hexTable.fireTableDataChanged();
-        offsetTableModel.fireTableDataChanged();
-        byteInfoPanel.setViewOffset(hexVisibleTable.getTableOffset());
-        updateSelectedByteInfo();
-    }
-
-    private void applyHexVisibleTableSettings() {
-        try {
-            int bytesInRow = Integer.parseInt(toolBar.getBytesInRowField().getText().trim());
-            int visibleRows = Integer.parseInt(toolBar.getVisibleRowsField().getText().trim());
-
-            hexVisibleTable.setBytesInRow(bytesInRow);
-            hexVisibleTable.setVisibleRows(visibleRows);
-
-            long normalizedOffset = navigationToHexTable.normalizeOffset(hexVisibleTable.getTableOffset());
-            hexVisibleTable.setTableOffset(normalizedOffset);
-
-            hexTable.fireTableStructureChanged();
-            offsetTableModel.fireTableDataChanged();
-
-            offsetTable.getColumnModel().getColumn(0).setPreferredWidth(80);
-
-            for (int i = 0; i < jHexTable.getColumnModel().getColumnCount(); i++) {
-                jHexTable.getColumnModel().getColumn(i).setPreferredWidth(42);
-            }
-        } catch (NumberFormatException e){
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Введите целые числа",
-                    "Ошибка",
-                    JOptionPane.ERROR_MESSAGE
-            );
-        } catch (IllegalArgumentException e) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    e.getMessage(),
-                    "Ошибка",
-                    JOptionPane.ERROR_MESSAGE
-            );
-        }
-    }
-
-    private byte[] readByteBlock(long startOffset, int size) throws IOException {
-        if (fileByteReader == null || startOffset < 0) {
-            return null;
-        }
-
-        if (startOffset + size > fileByteReader.length()) {
-            return null;
-        }
-
-        byte[] data = new byte[size];
-
-        for (int i = 0; i < size; i++) {
-            data[i] = fileByteReader.readByte(startOffset + i);
-        }
-
-        return data;
-    }
-
-    private void updateSelectedByteInfo() {
-        if (fileByteReader == null) {
-            byteInfoPanel.clearSelectionInfo();
-            return;
-        }
-
-        int row = jHexTable.getSelectedRow();
-        int column = jHexTable.getSelectedColumn();
-
-        if (row < 0 || column < 0) {
-            byteInfoPanel.clearSelectionInfo();
-            return;
-        }
-
-        long offset = hexVisibleTable.getByteOffset(row, column);
-
-        try {
-            if (offset >= fileByteReader.length()) {
-                byteInfoPanel.clearSelectionInfo();
-                return;
-            }
-
-            byte value = fileByteReader.readByte(offset);
-            byte[] block2 = readByteBlock(offset, 2);
-            byte[] block4 = readByteBlock(offset, 4);
-            byte[] block8 = readByteBlock(offset, 8);
-
-            byteInfoPanel.showSelection(offset, value, block2, block4, block8);
-        } catch (IOException e) {
-            byteInfoPanel.clearSelectionInfo();
-        }
-    }
 }
