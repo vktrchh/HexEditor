@@ -13,7 +13,7 @@ public class HexTable extends AbstractTableModel {
         this.hexVisibleTable = hexVisibleTable;
     }
 
-    public void setFileByteReader(FileByteReader fileByteReader) throws IOException{
+    public void setFileByteReader(FileByteReader fileByteReader) {
         this.fileByteReader = fileByteReader;
     }
 
@@ -25,6 +25,11 @@ public class HexTable extends AbstractTableModel {
     @Override
     public int getColumnCount() {
         return hexVisibleTable.getBytesInRow();
+    }
+
+    @Override
+    public String getColumnName(int column){
+        return String.format("%02X", column);
     }
 
     @Override

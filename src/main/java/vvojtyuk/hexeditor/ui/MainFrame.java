@@ -24,7 +24,6 @@ public class MainFrame extends JFrame {
     public MainFrame(){
         initFrame();
         setJMenuBar(mainMenuBar);
-        add(new JTable(hexTable));
         add(new JTable(offsetTable));
         add(toolBar, BorderLayout.NORTH);
         add(new JScrollPane(jHexTable));
