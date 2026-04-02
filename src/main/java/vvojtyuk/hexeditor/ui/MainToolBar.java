@@ -29,4 +29,20 @@ class MainToolBar extends JToolBar {
         add(new JLabel("Строк"));
         add(visibleRowsField);
     }
+
+    public JButton getStartButton() {
+        return startButton;
+    }
+
+    public JButton getEndButton() {
+        return endButton;
+    }
+
+    public JButton getPageUpButton() {
+        return pageUpButton;
+    }
+
+    public JButton getPageDownButton() {
+        return pageDownButton;
+    }
 }

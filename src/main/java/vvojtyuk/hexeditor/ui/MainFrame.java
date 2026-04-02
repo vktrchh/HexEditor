@@ -1,6 +1,7 @@
 package vvojtyuk.hexeditor.ui;
 
 import vvojtyuk.hexeditor.io.FileByteReader;
+import vvojtyuk.hexeditor.util.NavigationToHexTable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,15 +19,18 @@ public class MainFrame extends JFrame {
     private final HexTable hexTable = new HexTable(hexVisibleTable);
     private final JTable jHexTable = new JTable(hexTable);
 
-    private final JTable offsetTable = new JTable(new OffsetTable(hexVisibleTable));
+    private final OffsetTable offsetTableModel = new OffsetTable(hexVisibleTable);
+    private final JTable offsetTable = new JTable(offsetTableModel);
     private final JScrollPane scrollPane = new JScrollPane(jHexTable);
+
+    private final NavigationToHexTable navigationToHexTable = new NavigationToHexTable(hexVisibleTable);
 
     public MainFrame(){
         initFrame();
         setJMenuBar(mainMenuBar);
         initTables();
+        initAction();
         initLayout();
-        mainMenuBar.getOpenItem().addActionListener(e -> openFile());
     }
 
     public void initFrame(){
@@ -56,7 +60,17 @@ public class MainFrame extends JFrame {
         add(scrollPane, BorderLayout.CENTER);
     }
 
-    public void initAction(){}
+    public void initAction(){
+        mainMenuBar.getOpenItem().addActionListener(e -> openFile());
+
+        toolBar.getStartButton().addActionListener(e -> setHexVisibleTableOffset(navigationToHexTable.moveToStart()));
+
+        toolBar.getPageUpButton().addActionListener(e -> setHexVisibleTableOffset(navigationToHexTable.movePageUp()));
+
+        toolBar.getPageDownButton().addActionListener(e -> setHexVisibleTableOffset(navigationToHexTable.movePageDown()));
+
+        toolBar.getEndButton().addActionListener(e -> setHexVisibleTableOffset(navigationToHexTable.moveToEnd()));
+    }
 
     public void openFile(){
         JFileChooser chooser = new JFileChooser();
@@ -74,8 +88,16 @@ public class MainFrame extends JFrame {
 
             fileByteReader = new FileByteReader(file);
             hexTable.setFileByteReader(fileByteReader);
+            navigationToHexTable.setFileByteReader(fileByteReader);
+            setHexVisibleTableOffset(0);
         } catch (IOException e){
             return;
         }
+    }
+
+    private void setHexVisibleTableOffset(long offset){
+        hexVisibleTable.setTableOffset(offset);
+        hexTable.fireTableDataChanged();
+        offsetTableModel.fireTableDataChanged();
     }
 }
