@@ -41,4 +41,8 @@ public class MainMenuBar extends JMenuBar{
         add(searchMenu);
     }
 
+    public JMenuItem getOpenItem(){
+        return openItem;
+    }
+
 }
