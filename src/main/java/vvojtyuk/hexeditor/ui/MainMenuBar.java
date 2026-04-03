@@ -53,4 +53,35 @@ public class MainMenuBar extends JMenuBar{
         return saveAsItem;
     }
 
+    public JMenuItem getCopyItem(){
+        return copyItem;
+    }
+
+    public JMenuItem getCutItem() {
+        return cutItem;
+    }
+
+    public JMenuItem getPasteItem() {
+        return pasteItem;
+    }
+
+    public JMenuItem getPasteOverwriteItem() {
+        return pasteOverwriteItem;
+    }
+
+    public JMenuItem getInsertHexItem() {
+        return insertHexItem;
+    }
+
+    public JMenuItem getDeleteItem() {
+        return deleteItem;
+    }
+
+    public JMenuItem getMakeZeroItem() {
+        return makeZeroItem;
+    }
+
+    public JMenuItem getSearchItem() {
+        return searchItem;
+    }
 }

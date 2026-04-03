@@ -12,5 +12,5 @@ public interface HexDocument extends Closeable {
     void insert(long offset, byte[] data, InsertOption option) throws IOException;
     void saveTo(File file) throws IOException;
     @Override
-    public void close() throws IOException;
+    void close() throws IOException;
 }

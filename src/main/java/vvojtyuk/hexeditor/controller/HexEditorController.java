@@ -1,7 +1,6 @@
 package vvojtyuk.hexeditor.controller;
 
-import vvojtyuk.hexeditor.document.FileHexDocument;
-import vvojtyuk.hexeditor.document.HexDocument;
+import vvojtyuk.hexeditor.document.*;
 import vvojtyuk.hexeditor.ui.ByteInfoPanel;
 import vvojtyuk.hexeditor.ui.HexTable;
 import vvojtyuk.hexeditor.ui.HexVisibleTable;
@@ -26,6 +25,7 @@ public class HexEditorController {
     private final ByteInfoPanel byteInfoPanel;
     private final NavigationToHexTable navigationToHexTable;
 
+    private final HexClipboard clipboard = new HexClipboard();
     private File currentFile;
     private HexDocument hexDocument;
 
@@ -87,28 +87,18 @@ public class HexEditorController {
             currentFile = file;
 
             hexTable.setFileByteReader(hexDocument);
-            navigationToHexTable.setFileByteReader(hexDocument);
+            navigationToHexTable.setHexDocument(hexDocument);
 
             setHexVisibleTableOffset(0);
             byteInfoPanel.clearSelectionInfo();
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(
-                    parent,
-                    "Не удалось открыть файл",
-                    "Ошибка",
-                    JOptionPane.ERROR_MESSAGE
-            );
+            showErrorMessage("Не удалось открыть файл");
         }
     }
 
     public void saveFileAs() {
         if (hexDocument == null) {
-            JOptionPane.showMessageDialog(
-                    parent,
-                    "Сначала откройте файл",
-                    "Ошибка",
-                    JOptionPane.ERROR_MESSAGE
-            );
+            showErrorMessage("Ошибка при сохранении файла");
             return;
         }
 
@@ -124,23 +114,13 @@ public class HexEditorController {
         try {
             saveDocumentToTarget(file);
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(
-                    parent,
-                    "Ошибка при сохранении файла",
-                    "Ошибка",
-                    JOptionPane.ERROR_MESSAGE
-            );
+            showErrorMessage("Ошибка при сохранении файла");
         }
     }
 
     public void saveCurrentFile() {
         if (hexDocument == null) {
-            JOptionPane.showMessageDialog(
-                    parent,
-                    "Сначала откройте файл",
-                    "Ошибка",
-                    JOptionPane.ERROR_MESSAGE
-            );
+            showErrorMessage("Сначала откройте файл");
             return;
         }
 
@@ -152,12 +132,7 @@ public class HexEditorController {
         try {
             saveDocumentToTarget(currentFile);
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(
-                    parent,
-                    "Ошибка при сохранении файла",
-                    "Ошибка",
-                    JOptionPane.ERROR_MESSAGE
-            );
+            showErrorMessage("Ошибка при сохранении файла");
         }
     }
 
@@ -303,4 +278,267 @@ public class HexEditorController {
         return data;
     }
 
+    private long getSelectionStartOffset() throws IOException {
+        int[] rows = hexJTable.getSelectedRows();
+        int[] columns = hexJTable.getSelectedColumns();
+
+        if (rows.length == 0 || columns.length == 0) {
+            throw new IOException("Нет выделения.");
+        }
+
+        int minRow = rows[0];
+        int minColumn = columns[0];
+
+        for (int row : rows) {
+            if (row < minRow) {
+                minRow = row;
+            }
+        }
+
+        for (int column : columns) {
+            if (column < minColumn) {
+                minColumn = column;
+            }
+        }
+
+        long startOffset = hexVisibleTable.getByteOffset(minRow, minColumn);
+        if (startOffset >= hexDocument.length()) {
+            throw new IOException("Выделение вне границ документа.");
+        }
+
+        return startOffset;
+    }
+
+    private long getSelectionEndOffset() throws IOException {
+        int[] rows = hexJTable.getSelectedRows();
+        int[] columns = hexJTable.getSelectedColumns();
+
+        if (rows.length == 0 || columns.length == 0) {
+            throw new IOException("Нет выделения.");
+        }
+
+        int maxRow = rows[0];
+        int maxColumn = columns[0];
+
+        for (int row : rows) {
+            if (row > maxRow) {
+                maxRow = row;
+            }
+        }
+
+        for (int column : columns) {
+            if (column > maxColumn) {
+                maxColumn = column;
+            }
+        }
+
+        long endOffset = hexVisibleTable.getByteOffset(maxRow, maxColumn);
+        long maxDocumentOffset = hexDocument.length() - 1;
+
+        return Math.min(endOffset, maxDocumentOffset);
+    }
+
+    private long getSelectionLength() throws IOException {
+        long start = getSelectionStartOffset();
+        long end = getSelectionEndOffset();
+        return end - start + 1;
+    }
+
+    private byte[] readBytes(long startOffset, long length) throws IOException {
+        if (length <= 0) {
+            return new byte[0];
+        }
+
+        byte[] data = new byte[(int) length];
+
+        for (int i = 0; i < length; i++) {
+            data[i] = hexDocument.readByte(startOffset + i);
+        }
+
+        return data;
+    }
+
+    private void refreshDocumentView() {
+        hexTable.fireTableDataChanged();
+        offsetTableModel.fireTableDataChanged();
+        byteInfoPanel.setViewOffset(hexVisibleTable.getTableOffset());
+        updateSelectedByteInfo();
+    }
+
+    public void copySelection() {
+        if (hexDocument == null) {
+            showWarningMessage("Сначала откройте файл.");
+            return;
+        }
+
+        try {
+            long startOffset = getSelectionStartOffset();
+            long length = getSelectionLength();
+            clipboard.setBytes(readBytes(startOffset, length));
+        } catch (IOException e) {
+            showWarningMessage("Сначала выделите байт или диапазон байтов.");
+        }
+    }
+
+    public void cutSelection() {
+        if (hexDocument == null) {
+            showWarningMessage("Сначала откройте файл.");
+            return;
+        }
+
+        try {
+            long startOffset = getSelectionStartOffset();
+            long length = getSelectionLength();
+
+            clipboard.setBytes(readBytes(startOffset, length));
+            hexDocument.delete(startOffset, length, DeleteOption.SHIFT_LEFT);
+
+            refreshDocumentView();
+        } catch (IOException e) {
+            showErrorMessage("Ошибка при вырезании: " + e.getMessage());
+        }
+    }
+
+    public void deleteSelection() {
+        if (hexDocument == null) {
+            showWarningMessage("Сначала откройте файл.");
+            return;
+        }
+
+        try {
+            long startOffset = getSelectionStartOffset();
+            long length = getSelectionLength();
+
+            hexDocument.delete(startOffset, length, DeleteOption.SHIFT_LEFT);
+            refreshDocumentView();
+        } catch (IOException e) {
+            showErrorMessage("Ошибка при удалении: " + e.getMessage());
+        }
+    }
+
+    public void zeroFillSelection() {
+        if (hexDocument == null) {
+            showWarningMessage("Сначала откройте файл.");
+            return;
+        }
+
+        try {
+            long startOffset = getSelectionStartOffset();
+            long length = getSelectionLength();
+
+            hexDocument.delete(startOffset, length, DeleteOption.ZERO_FILL);
+            refreshDocumentView();
+        } catch (IOException e) {
+            showErrorMessage("Ошибка при обнулении: " + e.getMessage());
+        }
+    }
+
+    public void pasteClipboard() {
+        if (hexDocument == null) {
+            showWarningMessage("Сначала откройте файл.");
+            return;
+        }
+
+        if (clipboard.hasData()) {
+            showWarningMessage("Буфер обмена пуст.");
+            return;
+        }
+
+        try {
+            long offset = getSelectionStartOffset();
+            hexDocument.insert(offset, clipboard.getBytes(), InsertOption.SHIFT_RIGHT);
+            refreshDocumentView();
+        } catch (IOException e) {
+            showErrorMessage("Ошибка при вставке: " + e.getMessage());
+        }
+    }
+
+    public void pasteOverwrite() {
+        if (hexDocument == null) {
+            showWarningMessage("Сначала откройте файл.");
+            return;
+        }
+
+        if (clipboard.hasData()) {
+            showWarningMessage("Буфер обмена пуст.");
+            return;
+        }
+
+        try {
+            long offset = getSelectionStartOffset();
+            hexDocument.insert(offset, clipboard.getBytes(), InsertOption.OVERWRITE);
+            refreshDocumentView();
+        } catch (IOException e) {
+            showErrorMessage("Ошибка при вставке с заменой: " + e.getMessage());
+        }
+    }
+
+    public void insertHex() {
+        if (hexDocument == null) {
+            showWarningMessage("Сначала откройте файл.");
+            return;
+        }
+
+        String input = JOptionPane.showInputDialog(
+                parent,
+                "Введите hex-байты без 0x, например: AA FF 10",
+                ""
+        );
+
+        if (input == null) {
+            return;
+        }
+
+        input = input.trim();
+        if (input.isEmpty()) {
+            return;
+        }
+
+        try {
+            byte[] data = parseHexBytes(input);
+            long offset = getSelectionStartOffset();
+            hexDocument.insert(offset, data, InsertOption.SHIFT_RIGHT);
+            refreshDocumentView();
+        } catch (Exception e) {
+            showErrorMessage("Ошибка при вставке hex: " + e.getMessage());
+        }
+    }
+
+    private byte[] parseHexBytes(String text) {
+        String normalized = text.trim().replaceAll("\\s+", " ");
+        String[] parts = normalized.split(" ");
+
+        byte[] result = new byte[parts.length];
+
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i].trim();
+
+            if (part.length() != 2) {
+                throw new IllegalArgumentException("Каждый байт должен состоять из двух hex-символов.");
+            }
+
+            int value = Integer.parseInt(part, 16);
+            result[i] = (byte) value;
+        }
+
+        return result;
+    }
+
+    private void showErrorMessage(String message){
+        JOptionPane.showMessageDialog(
+                parent,
+                message,
+                "Ошибка",
+                JOptionPane.ERROR_MESSAGE
+        );
+    }
+
+    private void showWarningMessage(String  message){
+        JOptionPane.showMessageDialog(
+                parent,
+                message,
+                "Предупреждение",
+                JOptionPane.WARNING_MESSAGE
+        );
+    }
 }

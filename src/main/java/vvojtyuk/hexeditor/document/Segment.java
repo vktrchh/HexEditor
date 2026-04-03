@@ -3,7 +3,7 @@ package vvojtyuk.hexeditor.document;
 public class Segment {
     private final SegmentType type;
     private final long start;
-    private final long length;
+    private long length;
 
     public Segment(SegmentType type, long start, long length) {
         this.type = type;
@@ -21,5 +21,9 @@ public class Segment {
 
     public long getLength() {
         return length;
+    }
+
+    public void setLength(long length) {
+        this.length = length;
     }
 }

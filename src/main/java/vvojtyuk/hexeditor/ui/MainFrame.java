@@ -1,7 +1,6 @@
 package vvojtyuk.hexeditor.ui;
 
 import vvojtyuk.hexeditor.controller.HexEditorController;
-import vvojtyuk.hexeditor.io.FileByteReader;
 import vvojtyuk.hexeditor.util.NavigationToHexTable;
 
 import javax.swing.*;
@@ -54,6 +53,7 @@ public class MainFrame extends JFrame {
         jHexTable.setCellSelectionEnabled(true);
         jHexTable.setRowSelectionAllowed(true);
         jHexTable.setColumnSelectionAllowed(true);
+        jHexTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 
         offsetTable.setEnabled(false);
         offsetTable.setFocusable(false);
@@ -83,6 +83,16 @@ public class MainFrame extends JFrame {
         toolBar.getPageUpButton().addActionListener(e -> controller.movePageUp());
         toolBar.getPageDownButton().addActionListener(e -> controller.movePageDown());
         toolBar.getEndButton().addActionListener(e -> controller.moveToEnd());
+
+        mainMenuBar.getCopyItem().addActionListener(e -> controller.copySelection());
+        mainMenuBar.getCutItem().addActionListener(e -> controller.cutSelection());
+        mainMenuBar.getPasteItem().addActionListener(e -> controller.pasteClipboard());
+        mainMenuBar.getPasteOverwriteItem().addActionListener(e -> controller.pasteOverwrite());
+        mainMenuBar.getInsertHexItem().addActionListener(e -> controller.insertHex());
+        mainMenuBar.getDeleteItem().addActionListener(e -> controller.deleteSelection());
+        mainMenuBar.getMakeZeroItem().addActionListener(e -> controller.zeroFillSelection());
+
+        hexTable.addTableModelListener(e -> controller.updateSelectedByteInfo());
 
         toolBar.getBytesInRowField().addActionListener(e ->
                 controller.applyHexVisibleTableSettings(
