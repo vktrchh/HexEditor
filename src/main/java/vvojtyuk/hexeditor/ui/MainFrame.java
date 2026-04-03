@@ -76,6 +76,8 @@ public class MainFrame extends JFrame {
 
     public void initAction(){
         mainMenuBar.getOpenItem().addActionListener(e -> controller.openFile());
+        mainMenuBar.getSaveItem().addActionListener(e -> controller.saveCurrentFile());
+        mainMenuBar.getSaveAsItem().addActionListener(e -> controller.saveFileAs());
 
         toolBar.getStartButton().addActionListener(e -> controller.moveToStart());
         toolBar.getPageUpButton().addActionListener(e -> controller.movePageUp());

@@ -1,29 +1,29 @@
 package vvojtyuk.hexeditor.util;
 
-import vvojtyuk.hexeditor.io.FileByteReader;
+import vvojtyuk.hexeditor.document.HexDocument;
 import vvojtyuk.hexeditor.ui.HexVisibleTable;
 
 import java.io.IOException;
 
 public class NavigationToHexTable {
     private final HexVisibleTable hexVisibleTable;
-    private FileByteReader fileByteReader;
+    private HexDocument hexDocument;
 
     public NavigationToHexTable(HexVisibleTable hexVisibleTable){
         this.hexVisibleTable = hexVisibleTable;
     }
 
-    public void setFileByteReader(FileByteReader fileByteReader){
-        this.fileByteReader = fileByteReader;
+    public void setFileByteReader(HexDocument hexDocument){
+        this.hexDocument = hexDocument;
     }
 
     public long getMaxHexVisibleTableOffset() {
-        if(fileByteReader == null){
+        if(hexDocument == null){
             return 0;
         }
 
         try {
-            long fileLength = fileByteReader.length();
+            long fileLength = hexDocument.length();
             long pageSize = hexVisibleTable.getPageBytesSize();
 
             long maxOffset = fileLength - pageSize;

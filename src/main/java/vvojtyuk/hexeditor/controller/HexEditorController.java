@@ -12,6 +12,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 public class HexEditorController {
     private final Component parent;
@@ -23,6 +26,7 @@ public class HexEditorController {
     private final ByteInfoPanel byteInfoPanel;
     private final NavigationToHexTable navigationToHexTable;
 
+    private File currentFile;
     private HexDocument hexDocument;
 
     public HexEditorController(
@@ -70,13 +74,18 @@ public class HexEditorController {
         }
 
         File file = chooser.getSelectedFile();
+        loadFile(file);
+    }
 
+    private void loadFile(File file) {
         try {
             if (hexDocument != null) {
                 hexDocument.close();
             }
 
             hexDocument = new FileHexDocument(file);
+            currentFile = file;
+
             hexTable.setFileByteReader(hexDocument);
             navigationToHexTable.setFileByteReader(hexDocument);
 
@@ -90,6 +99,108 @@ public class HexEditorController {
                     JOptionPane.ERROR_MESSAGE
             );
         }
+    }
+
+    public void saveFileAs() {
+        if (hexDocument == null) {
+            JOptionPane.showMessageDialog(
+                    parent,
+                    "Сначала откройте файл",
+                    "Ошибка",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        JFileChooser chooser = new JFileChooser();
+        int result = chooser.showSaveDialog(parent);
+
+        if (result != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File file = chooser.getSelectedFile();
+
+        try {
+            saveDocumentToTarget(file);
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(
+                    parent,
+                    "Ошибка при сохранении файла",
+                    "Ошибка",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    public void saveCurrentFile() {
+        if (hexDocument == null) {
+            JOptionPane.showMessageDialog(
+                    parent,
+                    "Сначала откройте файл",
+                    "Ошибка",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        if (currentFile == null) {
+            saveFileAs();
+            return;
+        }
+
+        try {
+            saveDocumentToTarget(currentFile);
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(
+                    parent,
+                    "Ошибка при сохранении файла",
+                    "Ошибка",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private void saveDocumentToTarget(File targetFile) throws IOException {
+        boolean overwriteCurrent =
+                currentFile != null && currentFile.getCanonicalFile().equals(targetFile.getCanonicalFile());
+
+        if (!overwriteCurrent) {
+            hexDocument.saveTo(targetFile);
+            loadFile(targetFile);
+            return;
+        }
+
+        File parentDir = targetFile.getAbsoluteFile().getParentFile();
+        if (parentDir == null) {
+            parentDir = new File(".");
+        }
+
+        File tempFile = File.createTempFile("hexedit_", ".tmp", parentDir);
+
+        hexDocument.saveTo(tempFile);
+
+        hexDocument.close();
+
+        Path tempPath = tempFile.toPath();
+        Path targetPath = targetFile.toPath();
+
+        try {
+            Files.move(
+                    tempPath,
+                    targetPath,
+                    StandardCopyOption.REPLACE_EXISTING,
+                    StandardCopyOption.ATOMIC_MOVE
+            );
+        } catch (IOException e) {
+            Files.move(
+                    tempPath,
+                    targetPath,
+                    StandardCopyOption.REPLACE_EXISTING
+            );
+        }
+
+        loadFile(targetFile);
     }
 
     public void applyHexVisibleTableSettings(String bytesInRowText, String visibleRowsText) {

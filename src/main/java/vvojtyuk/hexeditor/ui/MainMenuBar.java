@@ -45,4 +45,12 @@ public class MainMenuBar extends JMenuBar{
         return openItem;
     }
 
+    public JMenuItem getSaveItem(){
+        return saveItem;
+    }
+
+    public JMenuItem getSaveAsItem(){
+        return saveAsItem;
+    }
+
 }
