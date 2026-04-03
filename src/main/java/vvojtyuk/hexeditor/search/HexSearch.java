@@ -5,6 +5,10 @@ import vvojtyuk.hexeditor.document.HexDocument;
 
 import java.io.IOException;
 
+/*
+    Класс для поиска байтовых последовательностей по маске, где ?? - любой байт
+ */
+
 public class HexSearch {
 
     public MaskPattern parseMaskPattern(String input) {
@@ -48,6 +52,7 @@ public class HexSearch {
         return new MaskPattern(values, wildcard);
     }
 
+    //ищет первое совпадение
     public long findMaskedPattern(HexDocument document, MaskPattern maskPattern) throws IOException {
         if (document == null) {
             throw new IllegalStateException("Файл не открыт.");

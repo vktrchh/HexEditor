@@ -5,6 +5,10 @@ import vvojtyuk.hexeditor.ui.HexVisibleTable;
 
 import java.io.IOException;
 
+/*
+    класс навигации по hex таблице
+ */
+
 public class NavigationToHexTable {
     private final HexVisibleTable hexVisibleTable;
     private HexDocument hexDocument;
@@ -34,6 +38,7 @@ public class NavigationToHexTable {
         }
     }
 
+    //ограничение и выравнивание смещения
     public long normalizeOffset(long offset){
         long maxOffset = getMaxHexVisibleTableOffset();
         long normalOffset = Math.max(0, Math.min(offset, maxOffset));

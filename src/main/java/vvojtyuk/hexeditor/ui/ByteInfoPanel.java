@@ -5,6 +5,11 @@ import java.awt.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+/*
+    Информационная панель. Показывает смещение, знаковое и беззнаковое представление байта,
+    блоки по 2/4/8 байт(little-endian)
+ */
+
 public class ByteInfoPanel extends JPanel {
     private final JLabel viewOffsetLabel = new JLabel("View offset: 00000000");
     private final JLabel selectedOffsetLabel = new JLabel("Selected: --");

@@ -167,6 +167,12 @@ public class FileHexDocument implements HexDocument{
         }
     }
 
+    @Override
+    public void close() throws IOException {
+        byteReader.close();
+    }
+
+    //подписать
     private void mergeAdjacentSegments() {
         if (segments.isEmpty()) {
             return;
@@ -195,6 +201,7 @@ public class FileHexDocument implements HexDocument{
         segments.addAll(merged);
     }
 
+    //удаляет байты в указанном диапазоне и вставляет на их место новые данные
     private void replaceRange(long startOffset, long deleteLength, byte[] insertedBytes) throws IOException {
         if (startOffset < 0 || deleteLength < 0) {
             throw new IllegalArgumentException("Отрицательные значения недопустимы.");
@@ -227,7 +234,7 @@ public class FileHexDocument implements HexDocument{
 
         mergeAdjacentSegments();
     }
-
+    //подписать
     private int findSegmentIndexAtBoundary(long logicalOffset) {
         long cursor = 0;
 
@@ -274,13 +281,6 @@ public class FileHexDocument implements HexDocument{
         segments.add(location.segmentIndex + 1, right);
     }
 
-
-
-    @Override
-    public void close() throws IOException {
-        byteReader.close();
-    }
-
     private static class SegmentLocation {
         private final int segmentIndex;
         private final long offsetInsideSegment;
@@ -290,7 +290,7 @@ public class FileHexDocument implements HexDocument{
             this.offsetInsideSegment = offsetInsideSegment;
         }
     }
-
+    //подписать
     private SegmentLocation locateSegment(long logicalOffset) throws IOException {
         long cursor = 0;
 

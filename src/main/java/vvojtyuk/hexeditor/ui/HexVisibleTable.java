@@ -1,5 +1,9 @@
 package vvojtyuk.hexeditor.ui;
 
+/*
+    Видимое окно приложения
+ */
+
 public class HexVisibleTable {
     private long tableOffset = 0;
     private int bytesInRow = 16;

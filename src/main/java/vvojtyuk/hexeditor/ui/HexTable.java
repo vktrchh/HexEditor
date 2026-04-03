@@ -13,7 +13,7 @@ public class HexTable extends AbstractTableModel {
         this.hexVisibleTable = hexVisibleTable;
     }
 
-    public void setFileByteReader(HexDocument hexDocument) {
+    public void setHexDocument(HexDocument hexDocument) {
         this.hexDocument = hexDocument;
         fireTableDataChanged();
     }

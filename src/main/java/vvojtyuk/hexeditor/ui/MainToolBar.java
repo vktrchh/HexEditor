@@ -2,6 +2,7 @@ package vvojtyuk.hexeditor.ui;
 
 import javax.swing.*;
 
+
 class MainToolBar extends JToolBar {
     private final JButton startButton = new JButton("|<");
     private final JButton endButton = new JButton("|>");

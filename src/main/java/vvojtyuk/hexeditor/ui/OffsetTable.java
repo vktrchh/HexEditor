@@ -2,6 +2,10 @@ package vvojtyuk.hexeditor.ui;
 
 import javax.swing.table.AbstractTableModel;
 
+/*
+    Таблица смещений с одним столбцом
+ */
+
 public class OffsetTable extends AbstractTableModel {
     private final HexVisibleTable visibleTable;
 

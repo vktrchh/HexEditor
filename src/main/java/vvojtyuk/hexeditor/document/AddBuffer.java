@@ -1,7 +1,9 @@
 package vvojtyuk.hexeditor.document;
 
 import java.util.Arrays;
-
+/*
+    Класс для хранения перезаписанных и добавленных байтов
+ */
 public class AddBuffer {
     private byte[] data = new byte[1024];
     private int size = 0;

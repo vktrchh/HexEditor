@@ -2,6 +2,11 @@ package vvojtyuk.hexeditor.io;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+
+/*
+    Класс для чтения файлов через RandomAccessFile
+ */
+
 public class FileByteReader {
     private final RandomAccessFile raf;
     public FileByteReader(File file) throws IOException{

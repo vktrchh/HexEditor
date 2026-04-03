@@ -6,6 +6,9 @@ import vvojtyuk.hexeditor.util.NavigationToHexTable;
 import javax.swing.*;
 import java.awt.*;
 
+/*
+    Главное окно
+ */
 public class MainFrame extends JFrame {
     private final MainMenuBar mainMenuBar = new MainMenuBar();
     private final MainToolBar toolBar = new MainToolBar();

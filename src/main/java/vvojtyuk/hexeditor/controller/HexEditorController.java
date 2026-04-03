@@ -1,6 +1,8 @@
 package vvojtyuk.hexeditor.controller;
 
 import vvojtyuk.hexeditor.document.*;
+import vvojtyuk.hexeditor.search.HexSearch;
+import vvojtyuk.hexeditor.search.MaskPattern;
 import vvojtyuk.hexeditor.ui.ByteInfoPanel;
 import vvojtyuk.hexeditor.ui.HexTable;
 import vvojtyuk.hexeditor.ui.HexVisibleTable;
@@ -24,6 +26,7 @@ public class HexEditorController {
     private final JTable offsetJTable;
     private final ByteInfoPanel byteInfoPanel;
     private final NavigationToHexTable navigationToHexTable;
+    private final HexSearch hexSearch = new HexSearch();
 
     private final HexClipboard clipboard = new HexClipboard();
     private File currentFile;
@@ -49,6 +52,7 @@ public class HexEditorController {
         this.navigationToHexTable = navigationToHexTable;
     }
 
+    //методы навигации
     public void moveToStart() {
         setHexVisibleTableOffset(navigationToHexTable.moveToStart());
     }
@@ -65,6 +69,7 @@ public class HexEditorController {
         setHexVisibleTableOffset(navigationToHexTable.moveToEnd());
     }
 
+    //методы открытия и сохраниния файлов
     public void openFile() {
         JFileChooser chooser = new JFileChooser();
         int result = chooser.showOpenDialog(parent);
@@ -86,7 +91,7 @@ public class HexEditorController {
             hexDocument = new FileHexDocument(file);
             currentFile = file;
 
-            hexTable.setFileByteReader(hexDocument);
+            hexTable.setHexDocument(hexDocument);
             navigationToHexTable.setHexDocument(hexDocument);
 
             setHexVisibleTableOffset(0);
@@ -178,6 +183,7 @@ public class HexEditorController {
         loadFile(targetFile);
     }
 
+    //методы настройки и отображения UI
     public void applyHexVisibleTableSettings(String bytesInRowText, String visibleRowsText) {
         try {
             int bytesInRow = Integer.parseInt(bytesInRowText.trim());
@@ -203,12 +209,7 @@ public class HexEditorController {
             updateSelectedByteInfo();
 
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(
-                    parent,
-                    "Введите целые числа",
-                    "Ошибка",
-                    JOptionPane.ERROR_MESSAGE
-            );
+            showErrorMessage("Введите целые числа");
         } catch (IllegalArgumentException e) {
             JOptionPane.showMessageDialog(
                     parent,
@@ -260,6 +261,13 @@ public class HexEditorController {
         updateSelectedByteInfo();
     }
 
+    private void refreshDocumentView() {
+        hexTable.fireTableDataChanged();
+        offsetTableModel.fireTableDataChanged();
+        byteInfoPanel.setViewOffset(hexVisibleTable.getTableOffset());
+        updateSelectedByteInfo();
+    }
+
     private byte[] readByteBlock(long startOffset, int size) throws IOException {
         if (hexDocument == null || startOffset < 0) {
             return null;
@@ -278,6 +286,7 @@ public class HexEditorController {
         return data;
     }
 
+    //методы выделения
     private long getSelectionStartOffset() throws IOException {
         int[] rows = hexJTable.getSelectedRows();
         int[] columns = hexJTable.getSelectedColumns();
@@ -358,13 +367,7 @@ public class HexEditorController {
         return data;
     }
 
-    private void refreshDocumentView() {
-        hexTable.fireTableDataChanged();
-        offsetTableModel.fireTableDataChanged();
-        byteInfoPanel.setViewOffset(hexVisibleTable.getTableOffset());
-        updateSelectedByteInfo();
-    }
-
+    //методы редактирования
     public void copySelection() {
         if (hexDocument == null) {
             showWarningMessage("Сначала откройте файл.");
@@ -481,7 +484,7 @@ public class HexEditorController {
 
         String input = JOptionPane.showInputDialog(
                 parent,
-                "Введите hex-байты без 0x, например: AA FF 10",
+                "Введите hex-байты без",
                 ""
         );
 
@@ -524,6 +527,7 @@ public class HexEditorController {
         return result;
     }
 
+    //методы сообщений
     private void showErrorMessage(String message){
         JOptionPane.showMessageDialog(
                 parent,
@@ -540,5 +544,73 @@ public class HexEditorController {
                 "Предупреждение",
                 JOptionPane.WARNING_MESSAGE
         );
+    }
+
+
+    //Методы поиска
+    public void showSearchDialog() {
+        if (hexDocument == null) {
+            showWarningMessage("Сначала откройте файл.");
+            return;
+        }
+
+        String input = JOptionPane.showInputDialog(
+                parent,
+                "Введите байты или маску. ?? — любой байт",
+                "Поиск",
+                JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (input == null) {
+            return;
+        }
+
+        input = input.trim();
+        if (input.isEmpty()) {
+            showWarningMessage("Введите последовательность для поиска.");
+            return;
+        }
+
+        try {
+            MaskPattern pattern = hexSearch.parseMaskPattern(input);
+            long foundOffset = hexSearch.findMaskedPattern(hexDocument, pattern);
+
+            if (foundOffset < 0) {
+                showWarningMessage("Совпадение не найдено.");
+                return;
+            }
+
+            navigateToFoundOffset(foundOffset);
+        } catch (IllegalArgumentException e) {
+            showWarningMessage(e.getMessage());
+        } catch (IOException e) {
+            showErrorMessage("Ошибка при поиске: " + e.getMessage());
+        }
+    }
+    private void navigateToFoundOffset(long foundOffset) {
+        long rowStartOffset = foundOffset - (foundOffset % hexVisibleTable.getBytesInRow());
+        setHexVisibleTableOffset(rowStartOffset);
+        selectSingleByte(foundOffset);
+    }
+
+    private void selectSingleByte(long offset) {
+        long pageStart = hexVisibleTable.getTableOffset();
+        long relativeOffset = offset - pageStart;
+
+        if (relativeOffset < 0) {
+            return;
+        }
+
+        int bytesInRow = hexVisibleTable.getBytesInRow();
+        int row = (int) (relativeOffset / bytesInRow);
+        int column = (int) (relativeOffset % bytesInRow);
+
+        if (row < 0 || row >= hexVisibleTable.getVisibleRows()) {
+            return;
+        }
+
+        hexJTable.clearSelection();
+        hexJTable.changeSelection(row, column, false, false);
+        updateSelectedByteInfo();
     }
 }
