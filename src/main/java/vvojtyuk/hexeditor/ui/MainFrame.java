@@ -79,11 +79,6 @@ public class MainFrame extends JFrame {
         mainMenuBar.getSaveItem().addActionListener(e -> controller.saveCurrentFile());
         mainMenuBar.getSaveAsItem().addActionListener(e -> controller.saveFileAs());
 
-        toolBar.getStartButton().addActionListener(e -> controller.moveToStart());
-        toolBar.getPageUpButton().addActionListener(e -> controller.movePageUp());
-        toolBar.getPageDownButton().addActionListener(e -> controller.movePageDown());
-        toolBar.getEndButton().addActionListener(e -> controller.moveToEnd());
-
         mainMenuBar.getCopyItem().addActionListener(e -> controller.copySelection());
         mainMenuBar.getCutItem().addActionListener(e -> controller.cutSelection());
         mainMenuBar.getPasteItem().addActionListener(e -> controller.pasteClipboard());
@@ -91,6 +86,13 @@ public class MainFrame extends JFrame {
         mainMenuBar.getInsertHexItem().addActionListener(e -> controller.insertHex());
         mainMenuBar.getDeleteItem().addActionListener(e -> controller.deleteSelection());
         mainMenuBar.getMakeZeroItem().addActionListener(e -> controller.zeroFillSelection());
+
+        mainMenuBar.getSearchItem().addActionListener(e -> controller.showSearchDialog());
+
+        toolBar.getStartButton().addActionListener(e -> controller.moveToStart());
+        toolBar.getPageUpButton().addActionListener(e -> controller.movePageUp());
+        toolBar.getPageDownButton().addActionListener(e -> controller.movePageDown());
+        toolBar.getEndButton().addActionListener(e -> controller.moveToEnd());
 
         hexTable.addTableModelListener(e -> controller.updateSelectedByteInfo());
 
