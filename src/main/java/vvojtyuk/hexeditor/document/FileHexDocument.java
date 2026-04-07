@@ -10,6 +10,7 @@ import java.util.List;
 public class FileHexDocument implements HexDocument{
     private final FileByteReader byteReader;
     private final AddBuffer addBuffer = new AddBuffer();
+    //содержание документа хранится как список сегментов(либо исходный файл, либо добавленные байты)
     private final List<Segment> segments = new ArrayList<>();
 
     private long logicalLength;
@@ -172,7 +173,6 @@ public class FileHexDocument implements HexDocument{
         byteReader.close();
     }
 
-    //подписать
     private void mergeAdjacentSegments() {
         if (segments.isEmpty()) {
             return;
@@ -234,7 +234,7 @@ public class FileHexDocument implements HexDocument{
 
         mergeAdjacentSegments();
     }
-    //подписать
+
     private int findSegmentIndexAtBoundary(long logicalOffset) {
         long cursor = 0;
 
@@ -252,6 +252,7 @@ public class FileHexDocument implements HexDocument{
 
         return -1;
     }
+
 
     private void splitAt(long logicalOffset) throws IOException {
         if (logicalOffset <= 0 || logicalOffset >= logicalLength) {
@@ -290,7 +291,8 @@ public class FileHexDocument implements HexDocument{
             this.offsetInsideSegment = offsetInsideSegment;
         }
     }
-    //подписать
+
+
     private SegmentLocation locateSegment(long logicalOffset) throws IOException {
         long cursor = 0;
 

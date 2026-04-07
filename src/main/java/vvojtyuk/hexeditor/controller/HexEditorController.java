@@ -141,6 +141,7 @@ public class HexEditorController {
         }
     }
 
+    //используется временный файл, чтобы не повредить источник
     private void saveDocumentToTarget(File targetFile) throws IOException {
         boolean overwriteCurrent =
                 currentFile != null && currentFile.getCanonicalFile().equals(targetFile.getCanonicalFile());
